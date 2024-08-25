@@ -69,11 +69,12 @@ public class LowFrequency {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         
-        FileInputFormat.addInputPath(job, new Path("/LowFrequency/data/task1_1.mtx"));
+        FileInputFormat.addInputPath(job, new Path("/TermFrequency/data/output/task1_1.mtx"));
         FileOutputFormat.setOutputPath(job, new Path("/LowFrequency/data/output/"));
         FileSystem fs = FileSystem.get(conf);
-        fs.rename(new Path("/LowFrequency/data/output/part-r-00000"), new Path("/LowFrequency/data/output/task1_2.mtx"));
 
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        if (job.waitForCompletion(true)) {
+            fs.rename(new Path("/LowFrequency/data/output/part-r-00000"), new Path("/LowFrequency/data/output/task1_2.mtx"));
+        }
     }
 }

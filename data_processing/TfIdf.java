@@ -111,7 +111,7 @@ public class TfIdf {
 
         // Count the number of documents
         FileSystem fs = FileSystem.get(conf);
-        String inputDirectory = "/TermFrequency/data/test/";
+        String inputDirectory = "/TermFrequency/data/bbc-fulltext/";
         FileStatus[] folders = fs.globStatus(new Path(inputDirectory));
         // Get the number of files in the input directory
         for (FileStatus folder : folders) {
@@ -156,6 +156,8 @@ public class TfIdf {
         FileInputFormat.addInputPath(job2, new Path("/TfIdf/data/tmp/"));
         FileOutputFormat.setOutputPath(job2, new Path("/TfIdf/data/output/"));
 
-        System.exit(job2.waitForCompletion(true) ? 0 : 1);
+        if (job2.waitForCompletion(true)) {
+            fs.rename(new Path("/TfIdf/data/output/part-r-00000"), new Path("/TfIdf/data/output/task1_4.mtx"));
+        }
     }
 }

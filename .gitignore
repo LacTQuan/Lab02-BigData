@@ -1,2 +1,5 @@
 data/
 teamKHMT2_02/
+*.class
+*.jar
+kmean/

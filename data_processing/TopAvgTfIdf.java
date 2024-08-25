@@ -134,7 +134,7 @@ public class TopAvgTfIdf {
         job.setReducerClass(AvgTfidfReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-        FileInputFormat.addInputPath(job, new Path("/TfIdf/data/output/part-r-00000"));
+        FileInputFormat.addInputPath(job, new Path("/TfIdf/data/output/task1_4.mtx"));
         FileOutputFormat.setOutputPath(job, new Path("/TopAvgTfIdf/data/tmp/"));
         job.waitForCompletion(true);
 

@@ -19,6 +19,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 public class TopFrequency {
+    private static Configuration conf = new Configuration();
+    private static Utils utils = new Utils(TopFrequency.conf);
     // Calculate the frequency of each term
     public static class TermFrequencyMapper extends Mapper<Object, Text, Text, IntWritable> {
 
@@ -54,14 +56,15 @@ public class TopFrequency {
     public static class TopTermsMapper extends Mapper<Object, Text, Text, IntWritable> {
 
         private IntWritable frequency = new IntWritable();
-        private Text termId = new Text();
+        private Text term = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] parts = value.toString().split("\\s+");
             if (parts.length == 2) {
-                termId.set(parts[0]);
+                String termId = parts[0];
                 frequency.set(Integer.parseInt(parts[1]));
-                context.write(termId, frequency);
+                term.set(TopFrequency.utils.getTerm(Integer.parseInt(termId)));
+                context.write(term, frequency);
             }
         }
     }
@@ -112,9 +115,7 @@ public class TopFrequency {
     }
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
-        Utils utils = new Utils(conf);
-        Job job = Job.getInstance(conf, "top frequency terms");
+        Job job = Job.getInstance(TopFrequency.conf, "top frequency terms");
         job.setJarByClass(TopFrequency.class);
         job.setMapperClass(TermFrequencyMapper.class);
         job.setCombinerClass(TermFrequencyReducer.class);
@@ -125,7 +126,7 @@ public class TopFrequency {
         FileOutputFormat.setOutputPath(job, new Path("/TopFrequency/data/tmp/"));
         job.waitForCompletion(true);
 
-        Job job2 = Job.getInstance(conf, "top terms");
+        Job job2 = Job.getInstance(TopFrequency.conf, "top terms");
         job2.setJarByClass(TopFrequency.class);
         job2.setMapperClass(TopTermsMapper.class);
         job2.setCombinerClass(TopTermsReducer.class);
@@ -134,23 +135,22 @@ public class TopFrequency {
         job2.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job2, new Path("/TopFrequency/data/tmp/part-r-00000"));
         FileOutputFormat.setOutputPath(job2, new Path("/TopFrequency/data/output/"));
-        job2.waitForCompletion(true);
-
-        FileSystem fs = FileSystem.get(conf);
-        fs.rename(new Path("/TopFrequency/data/output/part-r-00000"), new Path("/TopFrequency/data/output/task1_3.mtx"));
-
-        // Match term ids with term names and save to task1_3.txt
-        FileStatus[] status = fs.listStatus(new Path("/TopFrequency/data/output/"));
-        try(BufferedWriter writer = new BufferedWriter(new FileWriter("/TopFrequency/data/task1_3.txt"))) {
-            for (FileStatus file : status) {
-                try(BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(file.getPath())))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        String[] parts = line.split("\\s+");
-                        writer.write(utils.getTerm(Integer.parseInt(parts[0])) + " " + parts[1] + "\n");
-                    }
-                }
-            }
+        if (job2.waitForCompletion(true)) {
+            FileSystem fs = FileSystem.get(TopFrequency.conf);
+            fs.rename(new Path("/TopFrequency/data/output/part-r-00000"), new Path("/TopFrequency/data/output/task1_3.txt"));
         }
+        // // Match term ids with term names and save to task1_3.txt
+        // FileStatus[] status = fs.listStatus(new Path("/TopFrequency/data/output/"));
+        // try(BufferedWriter writer = new BufferedWriter(new FileWriter("/TopFrequency/data/task1_3.txt"))) {
+        //     for (FileStatus file : status) {
+        //         try(BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(file.getPath())))) {
+        //             String line;
+        //             while ((line = reader.readLine()) != null) {
+        //                 String[] parts = line.split("\\s+");
+        //                 writer.write(utils.getTerm(Integer.parseInt(parts[0])) + " " + parts[1] + "\n");
+        //             }
+        //         }
+        //     }
+        // }
     }
 }

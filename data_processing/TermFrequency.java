@@ -79,7 +79,7 @@ public class TermFrequency {
 
         FileSystem fs = FileSystem.get(TermFrequency.conf);
 
-        FileStatus[] folders = fs.globStatus(new Path("/TermFrequency/data/test/"));
+        FileStatus[] folders = fs.globStatus(new Path("/TermFrequency/data/bbc-fulltext/"));
         // for (int k = 0; k < folders.length; k++) {
         //     if (subfolders[k].isDirectory()) {
         //         FileInputFormat.addInputPath(job, new Path(subfolders[k].getPath().toString() + "/*"));
@@ -89,6 +89,10 @@ public class TermFrequency {
         for (FileStatus folder : folders) {
             FileStatus[] subfolders = fs.globStatus(new Path(folder.getPath().toString() + "/*"));
             for (FileStatus subfolder : subfolders) {
+                // ignore README file
+                if (subfolder.getPath().getName().equals("README.TXT")) {
+                    continue;
+                }
                 FileInputFormat.addInputPath(job, new Path(subfolder.getPath().toString() + "/*"));
             }
         }
